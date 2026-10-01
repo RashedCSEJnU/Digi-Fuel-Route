@@ -1,0 +1,7 @@
+OPIS Truckstop ID,Truckstop Name,Address,City,State,Rack ID,Retail Price
+1,VALID STOP,"I-40, EXIT 1",Phoenix,AZ,100,3.50
+2,,"I-40, EXIT 2",Phoenix,AZ,101,3.60
+3,BAD PRICE,"I-40, EXIT 3",Phoenix,AZ,102,abc
+4,NEGATIVE PRICE,"I-40, EXIT 4",Phoenix,AZ,103,-1.00
+5,EMPTY PRICE,"I-40, EXIT 5",Phoenix,AZ,104,
+6,,"",Phoenix,AZ,105,3.70
