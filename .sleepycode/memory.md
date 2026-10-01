@@ -14,6 +14,8 @@ Fuel route optimization API for truck drivers. Finds cheapest fuel stations alon
 - `routes/` — main app: models, services, management commands, tests
 - `routes/services/importer.py` — CSV parsing, normalization, dedup
 - `routes/services/geocoding.py` — Nominatim adapter with cache, retry, rate-limit
+- `routes/services/routing.py` — OSRM adapter with cache, retry, validation
+- `routes/exceptions.py` — domain exceptions + DRF exception handler
 - `routes/management/commands/import_fuel_prices.py` — CSV import command
 - `routes/models.py` — FuelStation, GeocodeCache, RouteCache
 
@@ -24,6 +26,8 @@ Fuel route optimization API for truck drivers. Finds cheapest fuel stations alon
 - Nominatim rate limit: 1 req/sec, exponential backoff (max 2 retries)
 - OSRM corridor: 10 miles, max detour: 20 miles, penalty: $0.20/mile
 - MPG=10, tank=50gal, max range=500mi
+- Route cache key: SHA256 of `origin->dest:profile` (directional)
+- Domain exceptions: ProviderError→502, NoFeasiblePlanError→404, NonUSLocationError→400
 
 ## Environment
 - `.env` blocked by tool; use `env_example` file at root
@@ -32,6 +36,7 @@ Fuel route optimization API for truck drivers. Finds cheapest fuel stations alon
 
 ## Status (as of 2026-10-01)
 - Phase 0+1 complete: bootstrap, models, migrations, CSV importer, geocoding service
-- 38 tests passing, ruff clean, migrations applied
+- Phase 2 complete: OSRM routing adapter, domain exceptions, routing tests
+- 50 tests passing, ruff clean, migrations applied
 - 425 stations imported from CSV (first 500 rows)
-- Next: Phase 2 — OSRM routing adapter + route cache + optimization engine
+- Next: Phase 3 — geometry helpers + fuel optimizer (DP solver)
