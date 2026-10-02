@@ -72,7 +72,7 @@ POST /api/v1/routes/optimize/
 | Geocoding  | Nominatim / OpenStreetMap (free, no key)    |
 | Routing    | Public OSRM (free, no key)                  |
 | Geometry   | NumPy vectorised segment index + haversine  |
-| Testing    | pytest + pytest-django (77 tests)           |
+| Testing    | pytest + pytest-django (107 tests)           |
 | Linting    | Ruff                                        |
 
 ---
@@ -388,6 +388,7 @@ routes/
     optimizer.py    Forward-DP fuel-stop solver
   tests/
     test_api.py            16 API integration tests (all mocked)
+    test_geometry.py       30 geometry helper tests
     test_geocoding.py       9 geocoding adapter tests
     test_routing.py        12 routing adapter tests
     test_optimizer.py      11 optimizer correctness tests
@@ -410,7 +411,7 @@ requirements.txt
 ## Running tests
 
 ```bash
-# All 77 tests
+# All 107 tests
 python3 -m pytest routes/tests/ -v
 
 # Single module
@@ -480,6 +481,6 @@ The collection includes:
 - [x] Fuel totals arithmetically consistent
 - [x] ≤2 geocode calls + 1 route call on cold; 0 on warm
 - [x] Zero per-station external calls in request path
-- [x] 77 automated tests, all mocked
+- [x] 107 automated tests, all mocked
 - [x] README, `.env.example`, Postman collection ready
 - [ ] Loom recording link: *(add after recording)*
