@@ -96,6 +96,7 @@ def _make_request(query: str, client: httpx.Client) -> dict:
         "format": "json",
         "limit": 1,
         "countrycodes": "us",
+        "addressdetails": 1,
     }
     headers = {"User-Agent": settings.GEOCODER_USER_AGENT}
 
@@ -202,7 +203,14 @@ def geocode_location(
         raise NonUSLocationError(f"Location not found or not in USA: {query}")
 
     item = data[0]
-    country_code = item.get("country_code", "").lower()
+    # country_code is at top level only when addressdetails=1 is NOT used;
+    # with addressdetails=1 it lives inside item["address"]["country_code"].
+    # Support both locations for forward/backward compatibility.
+    country_code = (
+        item.get("country_code")
+        or item.get("address", {}).get("country_code")
+        or ""
+    ).lower()
     if country_code != "us":
         _save_cache(
             query,

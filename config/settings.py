@@ -118,7 +118,7 @@ NOMINATIM_BASE_URL = os.environ.get(
     "NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org"
 )
 GEOCODER_USER_AGENT = os.environ.get(
-    "GEOCODER_USER_AGENT", "fuel-route-optimizer-exercise/contact@example.com"
+    "GEOCODER_USER_AGENT", "fuel-route-optimizer-exercise/assessment@digifuel.com"
 )
 
 PROVIDER_CONNECT_TIMEOUT_SECONDS = env_float("PROVIDER_CONNECT_TIMEOUT_SECONDS", 2.0)

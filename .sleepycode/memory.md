@@ -1,10 +1,10 @@
 # Digi-Fuel-Route — Project Memory
 
 ## Project Overview
-Fuel route optimization API for truck drivers. Finds cheapest fuel stations along a route between two US locations, considering detour penalties. Built with Django 5.2 + DRF + httpx.
+Fuel route optimization API for truck drivers. Finds cheapest fuel stations along a route between two US locations, considering detour penalties. Built with Django 5.2 + DRF + httpx + NumPy.
 
 ## Tech Stack
-- Python 3.12.3, Django 5.2.17, DRF 3.18.1, httpx 0.28.1
+- Python 3.12.3, Django 5.2.17, DRF 3.18.1, httpx 0.28.1, numpy 2.5.3
 - pytest 9.1.1 + pytest-django, ruff 0.16.9
 - SQLite (default), OSRM (routing), Nominatim (geocoding)
 - No venv (python3-venv unavailable); packages installed via `pip3 install --user --break-system-packages`
@@ -15,8 +15,8 @@ Fuel route optimization API for truck drivers. Finds cheapest fuel stations alon
 - `routes/services/importer.py` — CSV parsing, normalization, dedup
 - `routes/services/geocoding.py` — Nominatim adapter with cache, retry, rate-limit
 - `routes/services/routing.py` — OSRM adapter with cache, retry, validation
-- `routes/services/geometry.py` — haversine, segment distance (Decimal-safe), bounding box filter
-- `routes/services/optimizer.py` — DP fuel-stop solver
+- `routes/services/geometry.py` — haversine, segment distance; NumPy vectorised _SegmentIndex for fast nearest-route-point (~0.5ms per station vs 74ms naive)
+- `routes/services/optimizer.py` — Forward DP fuel-stop solver; O(n²) with fill-or-coast buy heuristic
 - `routes/exceptions.py` — canonical domain exceptions + DRF exception handler
 - `routes/serializers.py` — DRF request serializer (start, finish, initial_fuel_gallons)
 - `routes/views.py` — OptimizeRouteView orchestration: validate→geocode→route→optimize→serialize
@@ -34,16 +34,30 @@ Fuel route optimization API for truck drivers. Finds cheapest fuel stations alon
 - Canonical domain exceptions: all in `routes/exceptions.py`; geocoding.py imports NonUSLocationError from there (re-exported for backward compat)
 - DRF exception handler: NonUSLocationError→400, NoFeasiblePlanError→404, ProviderError→502
 - Geometry functions cast all coords to float() to handle Django Decimal model fields
+- NumPy _SegmentIndex pre-extracts route arrays; each station query is vectorised np.argmin
+
+## Optimizer Algorithm
+- Forward DP on candidate DAG: O(n²) where n = corridor candidates
+- "Fill-or-coast" heuristic: precompute first_cheaper[i] for O(1) buy decisions
+- No path-in-heap; path reconstructed from dp_prev[] array
+- Short route (<= initial fuel) returns immediately with 0 stops
+
+## Performance Results (NY→Chicago, 12659-pt OSRM geometry, 224 candidates)
+- Cold request: ~2.2s (2 Nominatim + 1 OSRM network calls)
+- Warm request: ~430ms (DB cache only, zero external calls)
+- Optimizer alone: ~340ms (NumPy vectorised geometry)
 
 ## Environment
 - `.env` blocked by tool; use `env_example` file at root
-- Nominatim public endpoint unreliable (timeouts); OSRM works fine
 - `python3 manage.py runserver` works; health endpoint at `/health/`
-- write_file tool does NOT persist to disk reliably; always use run_command cat > file << 'PYEOF' for new/rewritten files
+- write_file tool persists to disk reliably for this project
 
-## Status (as of 2026-10-02)
-- Phase 0+1+2+3+4 complete
+## Status (as of 2026-10-02 Phase 5 COMPLETE)
+- Phase 0+1+2+3+4+5 complete — ALL DONE
 - 77 tests passing, ruff clean, migrations applied
 - API endpoint: POST /api/v1/routes/optimize/
 - Response: route geometry, fuel_stops, summary, assumptions, metadata (cache flags)
-- Next: Phase 5 — performance measurement, documentation, Postman collection
+- Database: 6,739 stations total, 6,614 geocoded (98.1%)
+- README.md — comprehensive with benchmarks, setup, API reference
+- Postman collection: postman/Fuel-Route-Optimization.postman_collection.json
+- Remaining: Loom recording (manual task for user)
