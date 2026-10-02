@@ -9,6 +9,7 @@ import httpx
 from django.conf import settings
 from django.utils import timezone
 
+from routes.exceptions import NonUSLocationError  # canonical – used by DRF handler
 from routes.models import GeocodeCache
 
 logger = logging.getLogger("routes.geocoding")
@@ -18,8 +19,17 @@ class GeocodingError(Exception):
     """Raised when geocoding fails due to provider or network issues."""
 
 
-class NonUSLocationError(GeocodingError):
-    """Raised when a geocoded location is outside the USA."""
+# Re-export so existing callers that do
+#   from routes.services.geocoding import NonUSLocationError
+# continue to work without change.
+__all__ = [
+    "GeocodeResult",
+    "GeocodingError",
+    "NonUSLocationError",
+    "geocode_location",
+    "geocode_station_address",
+    "normalize_query",
+]
 
 
 @dataclass
