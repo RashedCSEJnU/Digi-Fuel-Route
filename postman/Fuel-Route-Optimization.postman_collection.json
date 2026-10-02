@@ -1,17 +1,10 @@
 {
   "info": {
-    "name": "Fuel Route Optimization",
     "_postman_id": "fuel-route-optimization-v1",
-    "description": "API collection for the Digi-Fuel-Route optimization service.\n\nSet the `base_url` environment variable to your server address (default: http://localhost:8000).",
+    "description": "API collection for the Digi-Fuel-Route optimization service.\n\nSet the `base_url` environment variable to your server address (default: http://localhost:8000).\n\nImport this collection, set base_url, then run requests in order. The first request to /optimize/ may take ~2s on a cold cache (2 geocode + 1 OSRM call). Repeat requests complete in ~430ms from DB cache.",
+    "name": "Fuel Route Optimization",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:8000",
-      "type": "string"
-    }
-  ],
   "item": [
     {
       "name": "Health",
@@ -19,22 +12,22 @@
         {
           "name": "GET /health/",
           "request": {
-            "method": "GET",
+            "description": "Liveness check. Returns 200 with {\"status\": \"ok\"}. Never calls external providers.",
             "header": [],
+            "method": "GET",
             "url": {
-              "raw": "{{base_url}}/health/",
               "host": ["{{base_url}}"],
-              "path": ["health", ""]
-            },
-            "description": "Liveness check. Returns 200 with {\"status\": \"ok\"}. Never calls external providers."
+              "path": ["health", ""],
+              "raw": "{{base_url}}/health/"
+            }
           },
           "response": [
             {
-              "name": "200 OK",
-              "status": "OK",
+              "body": "{\"status\": \"ok\"}",
               "code": 200,
               "header": [{"key": "Content-Type", "value": "application/json"}],
-              "body": "{\"status\": \"ok\"}"
+              "name": "200 OK",
+              "status": "OK"
             }
           ]
         }
@@ -44,178 +37,197 @@
       "name": "Route Optimization",
       "item": [
         {
-          "name": "POST /api/v1/routes/optimize/ — New York to Chicago",
+          "name": "POST /optimize/ — New York to Chicago (cold cache)",
           "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start\": \"New York, NY\",\n  \"finish\": \"Chicago, IL\"\n}"
             },
+            "description": "Multi-stop ~791-mile trip. Cold cache: 2 Nominatim + 1 OSRM call (~2 s). Warm: 0 external calls (~430 ms). Returns 4 fuel stops totalling ~$101.\n\nNote: geometry has 12,659 coordinates — response is large (~285 KB). The coordinates array is truncated in this example.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "Multi-stop cross-country trip (~790 miles). Returns route GeoJSON, optimized fuel stops, and cost summary."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": [
             {
-              "name": "200 — Optimized route with stops",
-              "status": "OK",
+              "body": "{\n  \"route\": {\n    \"distance_miles\": 790.57,\n    \"trip_distance_miles\": 798.74,\n    \"duration_seconds\": 53450.1,\n    \"geometry\": {\n      \"type\": \"LineString\",\n      \"coordinates\": [\n        [-74.005737, 40.712118],\n        [-74.005758, 40.712113],\n        \"... 12657 more coordinate pairs ...\"\n      ]\n    }\n  },\n  \"assumptions\": {\n    \"max_range_miles\": 500,\n    \"mpg\": 10,\n    \"tank_capacity_gallons\": 50,\n    \"initial_fuel_gallons\": 50.0,\n    \"fuel_price_unit\": \"USD per gallon\",\n    \"detour_distance_method\": \"estimated round-trip distance from nearest route point\"\n  },\n  \"fuel_stops\": [\n    {\n      \"sequence\": 1,\n      \"station\": {\n        \"id\": 5247,\n        \"name\": \"TURNPIKE MARKET EXPRESS\",\n        \"address\": \"SR-5\",\n        \"city\": \"Newton Falls\",\n        \"state\": \"OH\",\n        \"coordinates\": {\"latitude\": 41.197392, \"longitude\": -80.952731}\n      },\n      \"price_per_gallon\": 3.259,\n      \"route_mile\": 407.61,\n      \"detour_miles\": 0.76,\n      \"fuel_before_stop_gallons\": 9.16,\n      \"gallons_purchased\": 7.13,\n      \"fuel_after_stop_gallons\": 16.29,\n      \"estimated_cost\": 23.24\n    },\n    {\n      \"sequence\": 2,\n      \"station\": {\n        \"id\": 1686,\n        \"name\": \"CITGO\",\n        \"address\": \"I-475, EXIT 6\",\n        \"city\": \"Maumee\",\n        \"state\": \"OH\",\n        \"coordinates\": {\"latitude\": 41.571251, \"longitude\": -83.685036}\n      },\n      \"price_per_gallon\": 3.499,\n      \"route_mile\": 558.9,\n      \"detour_miles\": 2.88,\n      \"fuel_before_stop_gallons\": 0.88,\n      \"gallons_purchased\": 4.03,\n      \"fuel_after_stop_gallons\": 4.91,\n      \"estimated_cost\": 14.10\n    },\n    {\n      \"sequence\": 3,\n      \"station\": {\n        \"id\": 195,\n        \"name\": \"SUNOCO\",\n        \"address\": \"I-80/I-90, EXIT 13 & US-20ALT/SR-15\",\n        \"city\": \"Montpelier\",\n        \"state\": \"OH\",\n        \"coordinates\": {\"latitude\": 41.606061, \"longitude\": -84.588777}\n      },\n      \"price_per_gallon\": 3.415667,\n      \"route_mile\": 606.38,\n      \"detour_miles\": 1.56,\n      \"fuel_before_stop_gallons\": 0.0,\n      \"gallons_purchased\": 12.9,\n      \"fuel_after_stop_gallons\": 12.9,\n      \"estimated_cost\": 44.06\n    },\n    {\n      \"sequence\": 4,\n      \"station\": {\n        \"id\": 3581,\n        \"name\": \"Gallops\",\n        \"address\": \"US-20\",\n        \"city\": \"Michigan City\",\n        \"state\": \"IN\",\n        \"coordinates\": {\"latitude\": 41.6488625, \"longitude\": -86.836031}\n      },\n      \"price_per_gallon\": 3.399,\n      \"route_mile\": 730.82,\n      \"detour_miles\": 4.51,\n      \"fuel_before_stop_gallons\": 0.01,\n      \"gallons_purchased\": 5.89,\n      \"fuel_after_stop_gallons\": 5.9,\n      \"estimated_cost\": 20.02\n    }\n  ],\n  \"summary\": {\n    \"total_fuel_consumed_gallons\": 79.87,\n    \"total_gallons_purchased\": 29.95,\n    \"total_fuel_cost\": 101.42,\n    \"currency\": \"USD\"\n  },\n  \"metadata\": {\n    \"geocoder_provider\": \"Nominatim\",\n    \"route_provider\": \"OSRM\",\n    \"cached_geocodes\": {\"start\": false, \"finish\": false},\n    \"cached_route\": false,\n    \"station_count_considered\": 224,\n    \"optimizer_version\": \"v1\"\n  }\n}",
               "code": 200,
               "header": [{"key": "Content-Type", "value": "application/json"}],
-              "body": "{\n  \"route\": {\n    \"distance_miles\": 790.4,\n    \"trip_distance_miles\": 793.2,\n    \"duration_seconds\": 45600,\n    \"geometry\": {\n      \"type\": \"LineString\",\n      \"coordinates\": [\n        [-74.006, 40.7128],\n        [-87.6298, 41.8781]\n      ]\n    }\n  },\n  \"assumptions\": {\n    \"max_range_miles\": 500,\n    \"mpg\": 10,\n    \"tank_capacity_gallons\": 50,\n    \"initial_fuel_gallons\": 50,\n    \"fuel_price_unit\": \"USD per gallon\",\n    \"detour_distance_method\": \"estimated round-trip distance from nearest route point\"\n  },\n  \"fuel_stops\": [\n    {\n      \"sequence\": 1,\n      \"station\": {\n        \"id\": 42,\n        \"name\": \"Example Truckstop\",\n        \"address\": \"100 Route 80\",\n        \"city\": \"Cleveland\",\n        \"state\": \"OH\",\n        \"coordinates\": {\"latitude\": 41.4993, \"longitude\": -81.6944}\n      },\n      \"price_per_gallon\": 3.459,\n      \"route_mile\": 462.1,\n      \"detour_miles\": 1.2,\n      \"fuel_before_stop_gallons\": 3.79,\n      \"gallons_purchased\": 46.21,\n      \"fuel_after_stop_gallons\": 50.0,\n      \"estimated_cost\": 159.83\n    }\n  ],\n  \"summary\": {\n    \"total_fuel_consumed_gallons\": 79.32,\n    \"total_gallons_purchased\": 46.21,\n    \"total_fuel_cost\": 159.83,\n    \"currency\": \"USD\"\n  },\n  \"metadata\": {\n    \"geocoder_provider\": \"Nominatim\",\n    \"route_provider\": \"OSRM\",\n    \"cached_geocodes\": {\"start\": false, \"finish\": false},\n    \"cached_route\": false,\n    \"station_count_considered\": 12,\n    \"optimizer_version\": \"v1\"\n  }\n}"
+              "name": "200 — Optimized route (cold cache)",
+              "status": "OK"
             }
           ]
         },
         {
-          "name": "POST /api/v1/routes/optimize/ — Los Angeles to Houston",
+          "name": "POST /optimize/ — New York to Chicago (warm cache)",
           "request": {
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start\": \"New York, NY\",\n  \"finish\": \"Chicago, IL\"\n}"
+            },
+            "description": "Same request repeated. Shows cached_geocodes: {start: true, finish: true} and cached_route: true. Zero external provider calls. ~430ms response time.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
             "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
+            "url": {
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
+          },
+          "response": [
+            {
+              "body": "{\n  \"metadata\": {\n    \"geocoder_provider\": \"Nominatim\",\n    \"route_provider\": \"OSRM\",\n    \"cached_geocodes\": {\"start\": true, \"finish\": true},\n    \"cached_route\": true,\n    \"station_count_considered\": 224,\n    \"optimizer_version\": \"v1\"\n  }\n}",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "name": "200 — Warm cache (all results from DB)",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "name": "POST /optimize/ — Los Angeles to Houston",
+          "request": {
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start\": \"Los Angeles, CA\",\n  \"finish\": \"Houston, TX\"\n}"
             },
+            "description": "Long-haul trip (~1,400 miles) requiring multiple fuel stops.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "Long-haul trip (~1550 miles) requiring multiple stops."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": []
         },
         {
-          "name": "POST /api/v1/routes/optimize/ — Low initial fuel",
+          "name": "POST /optimize/ — Low initial fuel (10 gal)",
           "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start\": \"New York, NY\",\n  \"finish\": \"Chicago, IL\",\n  \"initial_fuel_gallons\": 10\n}"
             },
+            "description": "Start with only 10 gallons (100-mile immediate range). Forces an early first stop, then subsequent stops to cover the ~790 mile route.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "Start with only 10 gallons (range: 100 miles). Forces an early first stop."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": []
         },
         {
-          "name": "POST /api/v1/routes/optimize/ — Same city (zero route)",
+          "name": "POST /optimize/ — Same city (zero route)",
           "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start\": \"Chicago, IL\",\n  \"finish\": \"Chicago, IL\"\n}"
             },
+            "description": "Same start and finish. Returns 200 with empty fuel_stops and zero cost.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "Same start and finish returns 200 with empty fuel_stops and zero cost."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": []
         },
         {
-          "name": "POST /api/v1/routes/optimize/ — 400: Missing start",
+          "name": "POST /optimize/ — 400: Missing start",
           "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"finish\": \"Chicago, IL\"\n}"
             },
+            "description": "Returns 400 with DRF field-level validation error.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "Returns 400 with field-level validation error."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": [
             {
-              "name": "400 — Missing start",
-              "status": "Bad Request",
+              "body": "{\"start\": [\"This field is required.\"]}",
               "code": 400,
               "header": [{"key": "Content-Type", "value": "application/json"}],
-              "body": "{\"start\": [\"This field is required.\"]}"
+              "name": "400 — Missing start",
+              "status": "Bad Request"
             }
           ]
         },
         {
-          "name": "POST /api/v1/routes/optimize/ — 400: Non-US location",
+          "name": "POST /optimize/ — 400: Non-US location",
           "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start\": \"London, UK\",\n  \"finish\": \"Chicago, IL\"\n}"
             },
+            "description": "Non-US location returns 400 with detail message.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "Non-US location returns 400 with detail message."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": [
             {
-              "name": "400 — Non-US location",
-              "status": "Bad Request",
+              "body": "{\"detail\": \"Location is not in the USA: London, UK\"}",
               "code": 400,
               "header": [{"key": "Content-Type", "value": "application/json"}],
-              "body": "{\"detail\": \"Location is not in the USA: London, UK\"}"
+              "name": "400 — Non-US location",
+              "status": "Bad Request"
             }
           ]
         },
         {
-          "name": "POST /api/v1/routes/optimize/ — 400: Fuel out of range",
+          "name": "POST /optimize/ — 400: Fuel out of range",
           "request": {
-            "method": "POST",
-            "header": [
-              {"key": "Content-Type", "value": "application/json"}
-            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start\": \"New York, NY\",\n  \"finish\": \"Chicago, IL\",\n  \"initial_fuel_gallons\": 75\n}"
             },
+            "description": "initial_fuel_gallons > 50 (tank capacity) returns 400.",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "method": "POST",
             "url": {
-              "raw": "{{base_url}}/api/v1/routes/optimize/",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "routes", "optimize", ""]
-            },
-            "description": "initial_fuel_gallons > 50 (tank capacity) returns 400."
+              "path": ["api", "v1", "routes", "optimize", ""],
+              "raw": "{{base_url}}/api/v1/routes/optimize/"
+            }
           },
           "response": [
             {
-              "name": "400 — Fuel out of range",
-              "status": "Bad Request",
+              "body": "{\"initial_fuel_gallons\": [\"Ensure this value is less than or equal to 50.\"]}",
               "code": 400,
               "header": [{"key": "Content-Type", "value": "application/json"}],
-              "body": "{\"initial_fuel_gallons\": [\"Ensure this value is less than or equal to 50.\"]}"
+              "name": "400 — Fuel out of range",
+              "status": "Bad Request"
             }
           ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "type": "string",
+      "value": "http://localhost:8000"
     }
   ]
 }
