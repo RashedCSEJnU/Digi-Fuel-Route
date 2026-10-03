@@ -465,14 +465,14 @@ Deliver:
 
 ## 16. Definition of done
 
-- [ ] Django version is verified/pinned and all project checks/migrations pass.
-- [ ] The supplied CSV imports idempotently with an actionable quality report.
-- [ ] Only validated US start/finish locations are accepted.
-- [ ] The response supplies valid map-ready route geometry and station coordinates.
-- [ ] Optimization is deterministic, range-feasible, price-aware, and includes detour fuel/cost assumptions.
-- [ ] No selected/reconstructed leg requires more than the available 500-mile full-tank range.
-- [ ] Fuel totals, purchases, and monetary totals are arithmetically consistent.
-- [ ] A cache miss makes at most two geocode calls and one route call; a warm request makes none.
-- [ ] No per-station routing/geocoding occurs in the request path.
-- [ ] Automated tests cover the matrix above and never require public services.
-- [ ] README, `.env.example`, Postman collection, and a <=5 minute Loom link are present/ready for delivery.
+- [x] Django version is verified/pinned and all project checks/migrations pass.
+- [x] The supplied CSV imports idempotently with an actionable quality report.
+- [x] Only validated US start/finish locations are accepted.
+- [x] The response supplies valid map-ready route geometry and station coordinates.
+- [x] Optimization is deterministic, range-feasible, price-aware, and includes detour fuel/cost assumptions.
+- [x] No selected/reconstructed leg requires more than the available 500-mile full-tank range.
+- [x] Fuel totals, purchases, and monetary totals are arithmetically consistent.
+- [x] A cache miss makes at most two geocode calls and one route call; a warm request makes none.
+- [x] No per-station routing/geocoding occurs in the request path.
+- [x] Automated tests cover the matrix above and never require public services.
+- [ ] README, `.env.example`, Postman collection, and a <=5 minute Loom link are present/ready for delivery (Loom video pending recording).
