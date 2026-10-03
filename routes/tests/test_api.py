@@ -225,6 +225,24 @@ class TestOptimizeRouteAPI:
         assert "detail" in resp.json()
         assert "USA" in resp.json()["detail"]
 
+    @patch("routes.views.get_route")
+    @patch("routes.views.geocode_location")
+    def test_non_us_finish_returns_400(self, mock_geo, mock_rt):
+        """NonUSLocationError raised by geocoder for finish location → 400 with detail."""
+        mock_geo.side_effect = [
+            _mock_geocode(40.7128, -74.006),
+            NonUSLocationError("Location is not in the USA: Toronto, Canada"),
+        ]
+
+        resp = self.client.post(
+            self.url,
+            {"start": "New York, NY", "finish": "Toronto, Canada"},
+            format="json",
+        )
+        assert resp.status_code == 400
+        assert "detail" in resp.json()
+        assert "USA" in resp.json()["detail"]
+
     # -----------------------------------------------------------------------
     # Provider error — 502
     # -----------------------------------------------------------------------
