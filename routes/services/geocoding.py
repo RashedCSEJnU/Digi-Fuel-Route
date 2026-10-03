@@ -95,7 +95,6 @@ def _make_request(query: str, client: httpx.Client) -> dict:
         "q": query,
         "format": "json",
         "limit": 1,
-        "countrycodes": "us",
         "addressdetails": 1,
     }
     headers = {"User-Agent": settings.GEOCODER_USER_AGENT}
